@@ -334,6 +334,23 @@ async fn migrates_legacy_schema_and_enforces_store_contract() {
             expected,
             "cutoff offset {offset_minutes} minutes"
         );
+        // `sysknife history --since` reaches list_transactions, not
+        // list_history (run_history sends ListJobHistory), so the same cutoff
+        // must hold there too.
+        let transactions = store
+            .list_transactions(
+                10,
+                None,
+                Some("RestartService"),
+                Some(HistorySince::Cutoff(cutoff)),
+            )
+            .await
+            .expect("query transactions by exact cutoff");
+        assert_eq!(
+            transactions.len(),
+            expected,
+            "list_transactions cutoff offset {offset_minutes} minutes"
+        );
     }
     assert_eq!(structured[0].action_name, "RestartService");
     assert_eq!(structured[0].status, JobState::Running);
